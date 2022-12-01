@@ -1,0 +1,3 @@
+FROM postgis/postgis
+
+COPY ./restaurantes.csv /tmp/
