@@ -15,7 +15,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-BaseModel = declarative_base(metadata=MetaData(schema="intelimetrica"))
+BaseModel = declarative_base()
 
 
 def get_db():

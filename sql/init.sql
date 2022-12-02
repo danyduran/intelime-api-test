@@ -1,4 +1,5 @@
 
+
 \c intelimetrica;
 
 CREATE TABLE Restaurants(
@@ -14,4 +15,8 @@ CREATE TABLE Restaurants(
     lat DECIMAL NULL,
     lng DECIMAL NULL
 );
+
 COPY Restaurants FROM '/tmp/restaurantes.csv' WITH (FORMAT csv);
+
+ALTER TABLE Restaurants ADD COLUMN geolocation geography(point);
+UPDATE Restaurants SET geolocation=ST_MakePoint(lat, lng);
