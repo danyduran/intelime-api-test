@@ -1,15 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from starlette.responses import RedirectResponse
-
-from sqlalchemy.orm import Session
-from geoalchemy2 import functions
-from database import get_db
+from statistics import mean, stdev
 from typing import List
 
+from database import get_db
+from fastapi import Depends, FastAPI, HTTPException, status
+from geoalchemy2 import functions
 from models import Restaurant
 from schemas import Restaurant as RestaurantSchema
-from statistics import stdev, mean
-
+from sqlalchemy.orm import Session
+from starlette.responses import RedirectResponse
 
 app = FastAPI()
 
@@ -28,11 +26,16 @@ def get_all_resturants(db: Session = Depends(get_db)):
     Returns:
       All saved records of restaurant in db.
     """
-    records = db.query(Restaurant).all()
-    return records
+    return db.query(Restaurant).all()
+
 
 @app.get("/api/restaurants/statistics", status_code=200)
-def statistics(lng: float= None, lat: float = None, radius: int = None, db: Session = Depends(get_db)):
+def statistics(
+    lng: float = None,
+    lat: float = None,
+    radius: int = None,
+    db: Session = Depends(get_db),
+):
     """Get all records of restaurant in db.
 
     Args:
@@ -41,36 +44,32 @@ def statistics(lng: float= None, lat: float = None, radius: int = None, db: Sess
       All saved records of restaurant in db.
     """
 
-
     def get_statistics(restaurants: List[Restaurant]):
         try:
             stdev_result = stdev([restaurant.rating for restaurant in restaurants])
             avg = mean([restaurant.rating for restaurant in restaurants])
-            return {
-                "count": len(restaurants),
-                "stdev": stdev_result,
-                "avg": avg
-            }
+            return {"count": len(restaurants), "stdev": stdev_result, "avg": avg}
         except Exception as err:
-            print([restaurant.rating for restaurant in restaurants])
             return str(err)
-
-
-
 
     if lng and lat and radius:
         try:
-            result = db.query(Restaurant).where(
-                functions.ST_DistanceSphere(
-                    Restaurant.point, functions.ST_MakePoint(lng, lat)
+            result = (
+                db.query(Restaurant)
+                .where(
+                    functions.ST_DistanceSphere(
+                        Restaurant.point, functions.ST_MakePoint(lng, lat)
+                    )
+                    < radius
                 )
-                < radius
-            ).all()
+                .all()
+            )
             return get_statistics(restaurants=result)
         except Exception as err:
             return str(err)
     records = db.query(Restaurant).all()
     return get_statistics(restaurants=records)
+
 
 @app.get("/api/restaurants/{restaurant_id}", status_code=status.HTTP_200_OK)
 def get_restaurant_by_id(restaurant_id: str, db: Session = Depends(get_db)):
@@ -82,15 +81,6 @@ def get_restaurant_by_id(restaurant_id: str, db: Session = Depends(get_db)):
     Returns:
       One specific saved record of restaurant in db, filtered by id.
     """
-
-    if lng and lat and radius:
-        result = db.query(Restaurant).where(
-            functions.ST_DistanceSphere(
-                functions.ST_MakePoint("lng", "lat"), functions.ST_MakePoint(lng, lat)
-            )
-            <= radius
-        )
-        print("result", result)
     restaurant = db.query(Restaurant).filter_by(id=restaurant_id).first()
     if restaurant:
         return restaurant
@@ -152,7 +142,7 @@ def update_record_restaurant(restaurant_id, restaurant, db):
 
 @app.put("/api/restaurants/{restaurant_id}")
 def update_complete_restaurant(
-    restaurant_id: int, restaurant: RestaurantSchema, db: Session = Depends(get_db)
+    restaurant_id: str, restaurant: RestaurantSchema, db: Session = Depends(get_db)
 ):
     """Updated one specific record of restaurant.
 
@@ -185,7 +175,7 @@ def update_partial_restaurant(
 
 
 @app.delete("/api/restaurants/{restaurant_id}", status_code=204)
-def delete_a_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
+def delete_a_restaurant(restaurant_id: str, db: Session = Depends(get_db)):
     """Deleted one specific record of restaurant, filtered by id .
 
     Args:
@@ -200,7 +190,3 @@ def delete_a_restaurant(restaurant_id: int, db: Session = Depends(get_db)):
         db.commit()
         return {"detail": "Resource has been deleted sucessfully"}
     raise HTTPException(status_code=404, detail="Restaurant not found")
-
-
-
-

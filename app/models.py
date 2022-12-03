@@ -1,16 +1,17 @@
-from sqlalchemy import Column, Float, Integer, String, SmallInteger
-from sqlalchemy.orm import validates
+import uuid
 
 from database import BaseModel
 from geoalchemy2 import functions
-from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-
+from sqlalchemy import Column, Float, Integer, SmallInteger, String
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.hybrid import hybrid_method, hybrid_property
+from sqlalchemy.orm import validates
 
 
 class Restaurant(BaseModel):
     __tablename__ = "restaurants"
 
-    id = Column(String, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     rating = Column(SmallInteger, default=0)
     name = Column(String, nullable=False)
     site = Column(String, nullable=True)
