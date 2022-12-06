@@ -58,7 +58,7 @@ def statistics(
                 db.query(Restaurant)
                 .where(
                     functions.ST_DistanceSphere(
-                        Restaurant.point, functions.ST_MakePoint(lng, lat)
+                        .point, functions.ST_MakePoint(lng, lat)
                     )
                     < radius
                 )
